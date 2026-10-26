@@ -3796,13 +3796,18 @@ fn ramp_picker(app: &mut RustGisApp, ui: &mut Ui, cur: &Ramp, t: &Tokens) {
     }
 }
 
-/// A long list of ramps, a swatch and its name on each row, scrolling in a box of its own.
+/// A long list of ramps, a swatch and its name on each row, scrolling in a box of its own (only
+/// the rows in view are drawn).
 fn ramp_list(app: &mut RustGisApp, ui: &mut Ui, ramps: &[Ramp], cur: &Ramp, t: &Tokens) {
-    egui::ScrollArea::vertical().id_salt("ramp_list").max_height(260.0).auto_shrink([false, true]).show(ui, |ui| {
+    const ROW_H: f32 = 24.0;
+    let scroll = egui::ScrollArea::vertical().id_salt("ramp_list").max_height(260.0).auto_shrink([false, true]);
+    scroll.show_rows(ui, ROW_H, ramps.len(), |ui, rows| {
+        ui.spacing_mut().item_spacing.y = 0.0;
         let w = ui.available_width();
-        for r in ramps {
+        for r in ramps.get(rows).unwrap_or_default() {
             let selected = r == cur;
-            let (rect, resp) = ui.allocate_exact_size(vec2(w, 24.0), Sense::click());
+            let (rect, resp) = ui.allocate_exact_size(vec2(w, ROW_H), Sense::click());
+            resp.widget_info(|| egui::WidgetInfo::selected(egui::Role::Button, true, selected, r.name()));
             if selected || resp.hovered() {
                 ui.painter().rect_filled(rect, CornerRadius::same(3), if selected { t.accent.gamma_multiply(0.18) } else { t.hover });
             }

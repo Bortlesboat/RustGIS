@@ -4450,11 +4450,13 @@ fn custom_colour_ramps_add_apply_save_and_travel() {
     let mut p = s.project.clone();
     p.ramps = serde_json::from_str(
         r##"[{"name": "Brand", "stops": ["#000000", "#ffffff"]}, {"name": "brand", "stops": ["#111111", "#ffffff"]},
-            {"name": "Ember", "stops": ["#222222", "#ffffff"]}]"##,
+            {"name": "Ember", "stops": ["#222222", "#ffffff"]}, {"name": "jet", "stops": ["#333333", "#ffffff"]}]"##,
     )
     .unwrap();
     p.normalize();
-    assert_eq!(p.ramps.iter().map(|r| r.name()).collect::<Vec<_>>(), ["Brand", "brand 2", "Ember (custom)"]);
+    // The matplotlib library's names are built-in too: an older project's own "jet" is kept as
+    // "jet (custom)", while layers keep the copy of it they hold.
+    assert_eq!(p.ramps.iter().map(|r| r.name()).collect::<Vec<_>>(), ["Brand", "brand 2", "Ember (custom)", "jet (custom)"]);
     let mut t = world();
     t.run("layer.addData", &json!({"path": path("cities.rgislyr")})).unwrap();
     match &t.map().layer_by_name("Cities (2)").unwrap().renderer {

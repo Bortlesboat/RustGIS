@@ -41,7 +41,9 @@ colour sharply at the middle of the range, sea level for data centred on 0), **Q
 **Matplotlib** (the whole matplotlib colour map library as GeoLibre lists it, cmocean's maps
 included, by name from Accent to YlOrRd) and the project's own **Custom** ramps. Commands take a
 scheme by name; matplotlib's names are case-sensitive where they meet ours (`terrain` is
-matplotlib's, `Terrain` ours). Click a group's name to show or hide it. The Style tab sets the fill **Color**, the
+matplotlib's, `Terrain` ours). A project's own ramp named like a built-in one (an older
+project's `jet`, say) is renamed with ` (custom)` when the project opens; layers drawn with it
+keep their colours, as each holds its own copy. Click a group's name to show or hide it. The Style tab sets the fill **Color**, the
 **Outline** width, **Transparency** and a **Visibility Range** (the scales between which the layer
 draws; a large file read in place is not read at all outside them); points can be circles, squares,
 triangles, diamonds or stars. **Data › Definition Query** draws only the features matching a SQL
