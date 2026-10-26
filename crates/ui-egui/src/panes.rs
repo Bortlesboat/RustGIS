@@ -3395,13 +3395,7 @@ pub fn tool_icon(id: &str) -> &'static str {
 
 fn ramp_swatch(ui: &mut Ui, ramp: &Ramp, w: f32, selected: bool, t: &Tokens) -> egui::Response {
     let (r, resp) = ui.allocate_exact_size(vec2(w, 18.0), Sense::click());
-    let n = 24;
-    for i in 0..n {
-        let c = if ramp.is_qualitative() { ramp.pick(i * 10 / n, 10) } else { ramp.at(i as f64 / (n - 1) as f64) };
-        let x0 = r.min.x + r.width() * i as f32 / n as f32;
-        let x1 = r.min.x + r.width() * (i + 1) as f32 / n as f32 + 0.5;
-        ui.painter().rect_filled(Rect::from_min_max(pos2(x0, r.min.y), pos2(x1, r.max.y)), 0.0, c32(c));
-    }
+    paint_ramp(ui.painter(), r, ramp);
     ui.painter().rect_stroke(
         r,
         CornerRadius::same(2),
@@ -3409,6 +3403,17 @@ fn ramp_swatch(ui: &mut Ui, ramp: &Ramp, w: f32, selected: bool, t: &Tokens) -> 
         egui::StrokeKind::Outside,
     );
     resp
+}
+
+/// A ramp's colours across `r`, low to high.
+fn paint_ramp(painter: &egui::Painter, r: Rect, ramp: &Ramp) {
+    let n = 24;
+    for i in 0..n {
+        let c = if ramp.is_qualitative() { ramp.pick(i * 10 / n, 10) } else { ramp.at(i as f64 / (n - 1) as f64) };
+        let x0 = r.min.x + r.width() * i as f32 / n as f32;
+        let x1 = r.min.x + r.width() * (i + 1) as f32 / n as f32 + 0.5;
+        painter.rect_filled(Rect::from_min_max(pos2(x0, r.min.y), pos2(x1, r.max.y)), 0.0, c32(c));
+    }
 }
 
 const PENDING_SYMBOLOGY: &str = "symbology_pending_field";
@@ -3769,15 +3774,18 @@ fn ramp_picker(app: &mut RustGisApp, ui: &mut Ui, cur: &Ramp, t: &Tokens) {
     // One collapsible list per group; the current scheme's group starts open.
     let custom: Vec<Ramp> = app.session.project.ramps.iter().map(|r| Ramp::Custom(Box::new(r.clone()))).collect();
     for g in RampGroup::ALL {
-        let ramps: Vec<Ramp> =
-            if g == RampGroup::Custom { custom.clone() } else { Ramp::ALL.into_iter().filter(|r| r.group() == g).collect() };
+        let ramps: Vec<Ramp> = match g {
+            RampGroup::Custom => custom.clone(),
+            RampGroup::Matplotlib => Ramp::matplotlib_library(),
+            _ => Ramp::ALL.into_iter().filter(|r| r.group() == g).collect(),
+        };
         if ramps.is_empty() {
             continue;
         }
         egui::CollapsingHeader::new(egui::RichText::new(tl!(g.label())).size(11.5).color(t.text_dim))
             .id_salt(("ramp_group", g.label()))
             .default_open(cur.group() == g)
-            .show(ui, |ui| grid(app, ui, g.label(), ramps));
+            .show(ui, |ui| if g == RampGroup::Matplotlib { ramp_list(app, ui, &ramps, cur, t) } else { grid(app, ui, g.label(), ramps) });
     }
     if ui
         .small_button(tl!("Add Color Ramp File…"))
@@ -3786,6 +3794,34 @@ fn ramp_picker(app: &mut RustGisApp, ui: &mut Ui, cur: &Ramp, t: &Tokens) {
     {
         let _ = app.run("ui.openItem", json!({"kind": "ramps"}));
     }
+}
+
+/// A long list of ramps, a swatch and its name on each row, scrolling in a box of its own.
+fn ramp_list(app: &mut RustGisApp, ui: &mut Ui, ramps: &[Ramp], cur: &Ramp, t: &Tokens) {
+    egui::ScrollArea::vertical().id_salt("ramp_list").max_height(260.0).auto_shrink([false, true]).show(ui, |ui| {
+        let w = ui.available_width();
+        for r in ramps {
+            let selected = r == cur;
+            let (rect, resp) = ui.allocate_exact_size(vec2(w, 24.0), Sense::click());
+            if selected || resp.hovered() {
+                ui.painter().rect_filled(rect, CornerRadius::same(3), if selected { t.accent.gamma_multiply(0.18) } else { t.hover });
+            }
+            let swatch = Rect::from_min_size(pos2(rect.min.x + 6.0, rect.center().y - 7.0), vec2(72.0, 14.0));
+            paint_ramp(ui.painter(), swatch, r);
+            ui.painter().rect_stroke(swatch, CornerRadius::same(2), Stroke::new(1.0, t.border_strong), egui::StrokeKind::Outside);
+            // The library's own names, which aren't translated.
+            ui.painter().text(
+                pos2(swatch.max.x + 10.0, rect.center().y),
+                egui::Align2::LEFT_CENTER,
+                r.name(),
+                egui::FontId::proportional(13.0),
+                t.text,
+            );
+            if resp.clicked() {
+                let _ = app.run("layer.ramp", json!({"ramp": r.name()}));
+            }
+        }
+    });
 }
 
 /// Save as Default and Reset Default: how single-band rasters added from now on are drawn.

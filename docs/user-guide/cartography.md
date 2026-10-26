@@ -37,8 +37,11 @@ Pick a colour scheme from the pane's swatches, listed in groups: **Perceptually 
 Plasma, Inferno, Magma, Cividis, Batlow and Aurora: even steps in lightness, so they read in
 greyscale and for colour-blind viewers), **Sequential**, **Diverging** (Red–Blue, Vik, Roma,
 Balance), **Topographic and Bathymetric** (Terrain, Oleron, Topo and Deep; Oleron and Topo change
-colour sharply at the middle of the range, sea level for data centred on 0), **Qualitative** and
-the project's own **Custom** ramps. Click a group's name to show or hide it. The Style tab sets the fill **Color**, the
+colour sharply at the middle of the range, sea level for data centred on 0), **Qualitative**,
+**Matplotlib** (the whole matplotlib colour map library as GeoLibre lists it, cmocean's maps
+included, by name from Accent to YlOrRd) and the project's own **Custom** ramps. Commands take a
+scheme by name; matplotlib's names are case-sensitive where they meet ours (`terrain` is
+matplotlib's, `Terrain` ours). Click a group's name to show or hide it. The Style tab sets the fill **Color**, the
 **Outline** width, **Transparency** and a **Visibility Range** (the scales between which the layer
 draws; a large file read in place is not read at all outside them); points can be circles, squares,
 triangles, diamonds or stars. **Data › Definition Query** draws only the features matching a SQL
