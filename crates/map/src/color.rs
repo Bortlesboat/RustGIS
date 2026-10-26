@@ -274,9 +274,6 @@ impl RampGroup {
 pub struct Colormap(u8);
 
 impl Colormap {
-    /// The fallback for a name not in the library (the library holds `gray`; the test checks).
-    const GRAY: Colormap = Colormap(35);
-
     /// Every one, in the library's order.
     pub fn all() -> impl Iterator<Item = Colormap> {
         (0..matplotlib::COLORMAPS.len().min(256)).map(|i| Colormap(i as u8))
@@ -341,7 +338,10 @@ impl Serialize for Colormap {
 impl<'de> Deserialize<'de> for Colormap {
     fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
         let name = String::deserialize(d)?;
-        Ok(Colormap::find(&name, true).or_else(|| Colormap::find(&name, false)).unwrap_or(Colormap::GRAY))
+        Ok(Colormap::find(&name, true)
+            .or_else(|| Colormap::find(&name, false))
+            .or_else(|| Colormap::find("gray", true))
+            .unwrap_or(Colormap(0)))
     }
 }
 
@@ -719,7 +719,6 @@ mod tests {
         assert_eq!(text, r#"{"Matplotlib":"jet"}"#);
         assert_eq!(serde_json::from_str::<Ramp>(&text).unwrap(), jet);
         // An unknown name, from a newer version or a hand edit, still opens: as gray.
-        assert_eq!(Colormap::GRAY.name(), "gray");
         assert_eq!(serde_json::from_str::<Ramp>(r#"{"Matplotlib":"nope"}"#).unwrap(), gray);
     }
 
