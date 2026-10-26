@@ -3409,7 +3409,8 @@ fn ramp_swatch(ui: &mut Ui, ramp: &Ramp, w: f32, selected: bool, t: &Tokens) -> 
 fn paint_ramp(painter: &egui::Painter, r: Rect, ramp: &Ramp) {
     let n = 24;
     for i in 0..n {
-        let c = if ramp.is_qualitative() { ramp.pick(i * 10 / n, 10) } else { ramp.at(i as f64 / (n - 1) as f64) };
+        // A qualitative ramp's `at` picks the nearest of all its swatches (tab20 shows all 20).
+        let c = ramp.at(i as f64 / (n - 1) as f64);
         let x0 = r.min.x + r.width() * i as f32 / n as f32;
         let x1 = r.min.x + r.width() * (i + 1) as f32 / n as f32 + 0.5;
         painter.rect_filled(Rect::from_min_max(pos2(x0, r.min.y), pos2(x1, r.max.y)), 0.0, c32(c));
